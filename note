@@ -1,0 +1,9 @@
+>>>sha256sum *apk
+d18e8e19feba26f8f0c40ee989059e3db5076c5e803653508d0694c063257559  fenix-112.1.0-arm64-v8a.apk
+d18e8e19feba26f8f0c40ee989059e3db5076c5e803653508d0694c063257559  fenix-112.1.0-arm64-v8a_target.apk
+fc2c54e80b5ffcbb4045f4eb4b6a9ef615a0f21483bddea8727ac2a0ee24655d  fenix-113.0b6-arm64-v8a.apk
+fc2c54e80b5ffcbb4045f4eb4b6a9ef615a0f21483bddea8727ac2a0ee24655d  fenix-113.0b6-arm64-v8a_target.apk
+
+
+_target 是 https://firefox-ci-tc.services.mozilla.com/tasks/index/mobile.v3.firefox-android.apks.* 下载的;
+可见和 github上面的是一致的

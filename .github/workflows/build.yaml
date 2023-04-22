@@ -1,0 +1,76 @@
+name: Build Fenix
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '.github/**'
+      - '.idea/**'
+      - '.gitattributes'
+      - '.gitignore'
+      - '.gitmodules'
+      - '**.md'
+      - 'note'
+      - 'LICENSE'
+      - 'NOTICE'
+  pull_request:
+    paths-ignore:
+      - '.github/**'
+      - '.idea/**'
+      - '.gitattributes'
+      - '.gitignore'
+      - '.gitmodules'
+      - '**.md'
+      - 'LICENSE'
+      - 'NOTICE'
+
+jobs:
+  BuildFenix:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: 17
+
+      - name: Clone Repositories
+        run: |
+          [ -n "$(<branch_version)" ] && git clone https://github.com/mozilla-mobile/firefox-android -b "$(<branch_version)" || git clone --depth 1 https://github.com/mozilla-mobile/firefox-android
+          cp signing.properties firefox-android/fenix
+
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v2
+
+      - name: Execute Gradle build
+        run: |
+            case "$(<branch_version)" in *release*) channel=Release ;; *b*) channel=Beta ;; *) channel=Nightly ;; esac
+            cd firefox-android/fenix
+            echo "sdk.dir=/usr/local/lib/android/sdk" > local.properties
+            ./gradlew clean app:assemble"${channel}"
+
+      - name: Upload Apks To Tag
+        run: |
+            TAG="$(date '+%Y%m%d%H')"
+            git config --local user.name "github-actions"
+            git config --local user.email "noreply@github.com"
+            branch="$(echo $channel|tr 'A-Z' 'a-z')"
+            git checkout "$branch" || git checkout -b "$branch"
+            rm *.apk
+            cp firefox-android/fenix/app/build/outputs/apk/"$branch"/*.apk .
+            git add *.apk
+            git commit -am "$TAG"
+            git checkout --orphan new_tag
+            git commit -m "Creating ${TAG}_${branch}"
+            git branch -D "$branch"
+            git branch -m "$branch"
+            git tag "${TAG}_${branch}"
+            git push origin "${TAG}_${branch}"
+            git push origin "$branch"
